@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import tensorflow as tf
 
@@ -11,7 +12,7 @@ class Array2serialize(object):
         self._dtypes = dtypes
         
     def __repr__(self):
-        return 'Serilizer initializing...'
+        return 'Serializer initializing...'
     
     def serialize_example(self, example):
         feature = {}
@@ -45,12 +46,12 @@ class Array2serialize(object):
     
     
 class Compresser(object):
-    def __init__():
+    def __init__(self):
         pass
     
 
 class TFRWriter(object):
-    '''Use for transfer processed DataFrame to TFRecord file
+    '''Use for transfer processed DataFrame to TFRecord file.
     '''
     def __init__(self):
         print('TFRecord writer initializing...')
@@ -61,7 +62,16 @@ class TFRWriter(object):
         data = iter(data.values)
         return header, dtypes, data
 
-    def write(self, data, file_name, save_dir):
+    def write(self, 
+              data: pd.DataFrame, 
+              file_name: str, 
+              save_dir: str):
+        '''Write DataFrame file to TFRecord file.
+        
+        :param data: pandas format
+        :param file_name: certain file name will be saved,like bank_train.tfrecord or bank_val.tfrecord
+        :param save_dir: folder to save the result
+        '''
         header, dtypes, data = self._load_data(data)
         serializer = Array2serialize(header, dtypes)
         file_path = ''.join([save_dir, file_name])
@@ -73,3 +83,21 @@ class TFRWriter(object):
                 except StopIteration:
                     print('Writing {} done, writing to {} .'.format(file_name, save_dir))
                     break
+
+    def compresser(self, 
+                   folder_dir: str, 
+                   destination: str):
+        '''According to the file format to compress and move or just move to destinaton.
+
+        :param folder_dir: super path of the file need to compress and move.
+        :param destination: destination to locate compressed file
+        '''
+        files = os.listdir(folder_dir)
+        for file in files:
+            if file.endswith('.tfrecord'):
+                f = ''.join([folder_dir, file])
+                os.system('gzip {}'.format(f))
+                os.system('mv {}.gz {}'.format(f, destination))
+            if file.endswith('.gz'):
+                os.system('mv ./dataset/*.gz {}'.format(destination))
+        
