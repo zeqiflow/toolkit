@@ -9,7 +9,10 @@ class Array2serialize(object):
 
         self._header = header
         self._dtypes = dtypes
-
+        
+    def __repr__(self):
+        return 'Serilizer initializing...'
+    
     def serialize_example(self, example):
         feature = {}
         for i in range(len(example)):
@@ -17,8 +20,8 @@ class Array2serialize(object):
             dtype = self._dtypes[i]
             value = example[i]
             if dtype == 'int64':
-                feature[col] = self._int64_feature(value)
-            elif dtype == 'float32':
+                feature[col] = self._int64_feature(int(value))
+            elif dtype == 'float64' or dtype == 'float32':
                 feature[col] = self._float_feature(value)
             elif dtype == 'object':
                 feature[col] = self._bytes_feature(value)
@@ -39,33 +42,34 @@ class Array2serialize(object):
     def _float_feature(self, value):
         """Returns a float_list from a float / double."""
         return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
-
+    
+    
+class Compresser(object):
+    def __init__():
+        pass
+    
 
 class TFRWriter(object):
     '''Use for transfer processed DataFrame to TFRecord file
     '''
-    def __init__(self,
-                data,
-                save_tfrecord_dir):
-        
-        self._data = data
-        self._save_tfrecord_dir = save_tfrecord_dir
+    def __init__(self):
+        print('TFRecord writer initializing...')
 
-    def _load_data(self):
-        header = self._data.columns
-        dtypes = self._data.dtypes
-        data = iter(self._data.values)
+    def _load_data(self, data):
+        header = data.columns
+        dtypes = data.dtypes
+        data = iter(data.values)
         return header, dtypes, data
 
-    def write(self):
-        header, dtypes, data = self._load_data()
+    def write(self, data, file_name, save_dir):
+        header, dtypes, data = self._load_data(data)
         serializer = Array2serialize(header, dtypes)
-        with tf.io.TFRecordWriter(path=self._save_tfrecord_dir) as writer:
+        file_path = ''.join([save_dir, file_name])
+        with tf.io.TFRecordWriter(path='{}.tfrecord'.format(file_path)) as w:
             while True:
                 try:
                     bi_res = serializer.serialize_example(next(data))
-                    writer.write(bi_res)
-                except:
-                    print('Writing done, writing to {}.'.format(self._save_tfrecord_dir))
+                    w.write(bi_res)
+                except StopIteration:
+                    print('Writing {} done, writing to {} .'.format(file_name, save_dir))
                     break
-                
